@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>CBZer</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light dark;
+      --bg: #f2f4f8;
+      --surface: #fff;
+      --surface-2: #f7f9fc;
+      --text: #172033;
+      --muted: #5c6880;
+      --border: #dfe4ec;
+      --accent: #2f5fd0;
+      --accent-text: #fff;
+      --accent-soft: #ebf1ff;
+      --success: #17663a;
+      --error: #b42833;
+      --shadow: 0 1px 2px rgb(16 24 40 / .05), 0 6px 20px rgb(16 24 40 / .06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e131b;
+        --surface: #161d28;
+        --surface-2: #1c2431;
+        --text: #e6ecf5;
+        --muted: #9eabc0;
+        --border: #2a3445;
+        --accent: #8fb1ff;
+        --accent-text: #0e1a33;
+        --accent-soft: #1f2c45;
+        --success: #7fd3a0;
+        --error: #ff9aa3;
+        --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; }
+    body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    main { width: min(100% - 32px, 900px); margin: 0 auto; padding-bottom: 24px; }
+    h1, h2 { margin: 0; letter-spacing: -.01em; }
+    h1 { font-size: 1.5rem; line-height: 1.25; }
+    h2 { font-size: 1.1rem; }
+    p { margin: 6px 0 0; }
+    .muted { color: var(--muted); }
+    svg { display: block; flex-shrink: 0; }
+    button, input, select { font: inherit; }
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background-color .15s, border-color .15s, color .15s, filter .15s;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+    button:disabled { opacity: .55; cursor: default; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .app-header { display: flex; align-items: center; gap: 12px; padding: 16px 0; }
+    .brand { display: flex; align-items: center; gap: 10px; min-height: 36px; flex-shrink: 0; font-weight: 700; font-size: 1.05rem; }
+    .brand + nav { padding-left: 12px; border-left: 1px solid var(--border); }
+    nav:empty { display: none; }
+    .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--accent); color: var(--accent-text); }
+    .panel { padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+    nav { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; font-size: .9rem; }
+    nav button { min-height: 36px; padding: 6px 10px; border-color: transparent; background: transparent; color: var(--muted); overflow-wrap: anywhere; min-width: 0; max-width: 100%; text-align: left; }
+    nav button[aria-current] { color: var(--text); font-weight: 650; }
+    .separator { color: var(--muted); opacity: .6; }
+    .browser-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .browser-heading > div { min-width: 0; }
+    #refresh-button { flex-shrink: 0; }
+    #folder-title { overflow-wrap: anywhere; }
+    #folder-info { font-size: .9rem; }
+    #folders, #archives { list-style: none; margin: 0; padding: 0; }
+    #folders { display: grid; gap: 2px; transition: opacity .15s; }
+    #browser-panel[aria-busy="true"] #folders { opacity: .5; }
+    .folder-button {
+      justify-content: flex-start;
+      gap: 12px;
+      width: 100%;
+      min-height: 56px;
+      padding: 8px 12px 8px 8px;
+      border-color: transparent;
+      background: transparent;
+      text-align: left;
+    }
+    .folder-button:hover:not(:disabled) { border-color: transparent; }
+    .folder-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); flex-shrink: 0; transition: background-color .15s; }
+    .folder-button:hover:not(:disabled) .folder-icon { background: var(--surface); }
+    .folder-name { flex: 1; overflow-wrap: anywhere; min-width: 0; font-weight: 550; }
+    .folder-arrow { color: var(--muted); flex-shrink: 0; transition: transform .15s, color .15s; }
+    .folder-button:hover:not(:disabled) .folder-arrow { color: var(--accent); transform: translateX(3px); }
+    #empty-folders { padding: 32px 0; text-align: center; }
+    .folder-tools { display: flex; align-items: end; gap: 12px; margin-bottom: 16px; }
+    .folder-tools > div { min-width: 0; }
+    .filter-control { flex: 1; min-width: 0; }
+    .folder-tools label { margin: 0 0 6px; }
+    .search-field { position: relative; }
+    .search-field svg { position: absolute; top: 50%; left: 14px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    #folder-filter { padding-left: 42px; }
+    select { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); font-size: 16px; }
+    .list-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 8px; }
+    #folder-range { margin: 0; font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .pagination { display: flex; gap: 8px; }
+    .pagination button { min-height: 36px; padding: 6px 12px; font-size: .875rem; }
+    .folder-meta { display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 45%; flex-shrink: 0; color: var(--muted); font-size: .8rem; }
+    .folder-date { min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+    #date-note { margin: 8px 0; font-size: .875rem; }
+    #archives-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    #archives-section h3 { margin: 0 0 10px; font-size: .8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    #archives { display: grid; gap: 6px; }
+    #archives li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); overflow-wrap: anywhere; font-size: .9rem; }
+    #archives li svg { color: var(--success); }
+    #archives li span { min-width: 0; }
+    #create-panel { margin-top: 20px; }
+    label { display: block; margin: 20px 0 6px; font-size: .875rem; font-weight: 600; }
+    .create-row { display: flex; align-items: stretch; gap: 12px; }
+    .filename { display: flex; align-items: center; flex: 1; min-width: 0; }
+    input {
+      width: 100%;
+      min-width: 0;
+      min-height: 48px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 16px;
+      transition: border-color .15s;
+    }
+    input:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--muted); }
+    .filename input { border-radius: 10px 0 0 10px; }
+    .extension { align-self: stretch; display: flex; align-items: center; padding: 0 14px; border: 1px solid var(--border); border-left: 0; border-radius: 0 10px 10px 0; background: var(--bg); color: var(--muted); font-weight: 600; }
+    #create-button { padding-inline: 20px; background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 650; white-space: nowrap; }
+    #create-button:hover:not(:disabled) { filter: brightness(1.08); }
+    #destination { margin-top: 10px; font-size: .875rem; overflow-wrap: anywhere; }
+    #notice { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--border); border-left-width: 4px; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); overflow-wrap: anywhere; }
+    #notice[data-kind="error"] { color: var(--error); border-color: var(--error); background: color-mix(in srgb, var(--error) 8%, var(--surface)); }
+    #notice[data-kind="success"] { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 8%, var(--surface)); }
+    #notice[data-kind="info"] { border-left-color: var(--accent); }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+    @media (max-width: 560px) {
+      main { width: calc(100% - 24px); }
+      .app-header { padding: 10px 0; gap: 8px; }
+      .brand-name { display: none; }
+      .brand + nav { padding-left: 8px; }
+      .panel { padding: 16px; border-radius: 14px; }
+      h1 { font-size: 1.25rem; }
+      .create-row { flex-direction: column; }
+      #create-button { width: 100%; min-height: 48px; }
+      .folder-tools { flex-direction: column; align-items: stretch; }
+      .folder-icon { width: 34px; height: 34px; }
+      nav { gap: 0; }
+      nav button { padding-inline: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+        </span>
+        <span class="brand-name">CBZer</span>
+      </div>
+      <nav id="breadcrumbs" aria-label="Folder path"></nav>
+    </header>
+
+    <section class="panel" aria-labelledby="folder-title" aria-busy="true" id="browser-panel">
+      <div class="browser-heading">
+        <div>
+          <h1 id="folder-title">Library</h1>
+          <p id="folder-info" class="muted">Loading folders…</p>
+        </div>
+        <button id="refresh-button" type="button" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="folder-tools">
+        <div class="filter-control">
+          <label for="folder-filter">Filter folders</label>
+          <div class="search-field">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="folder-filter" type="search" placeholder="Filter this folder…" autocomplete="off" spellcheck="false" aria-controls="folders" disabled>
+          </div>
+        </div>
+        <div>
+          <label for="folder-sort">Sort folders</label>
+          <select id="folder-sort" aria-controls="folders" disabled>
+            <option value="name-asc">Name: A–Z</option>
+            <option value="name-desc">Name: Z–A</option>
+            <option value="created-desc">Created: newest first</option>
+            <option value="created-asc">Created: oldest first</option>
+          </select>
+        </div>
+      </div>
+      <div class="list-toolbar">
+        <p id="folder-range" class="muted" role="status" aria-live="polite"></p>
+        <div id="folder-pagination" class="pagination" role="group" aria-label="Folder pages" hidden>
+          <button id="previous-page" type="button" disabled>Previous</button>
+          <button id="next-page" type="button" disabled>Next</button>
+        </div>
+      </div>
+      <p id="date-note" class="muted" hidden>Creation dates are unavailable for some folders; those folders appear last.</p>
+      <ul id="folders" aria-label="Subfolders"></ul>
+      <p id="empty-folders" class="muted" hidden>No subfolders here.</p>
+      <section id="archives-section" hidden aria-labelledby="archives-title">
+        <h3 id="archives-title">CBZ files in this folder</h3>
+        <ul id="archives"></ul>
+      </section>
+    </section>
+
+    <section id="create-panel" class="panel" hidden aria-labelledby="create-title">
+      <h2 id="create-title">Create CBZ from this folder</h2>
+      <p class="muted">Includes images in subfolders. Existing archives are never overwritten.</p>
+      <form id="create-form">
+        <label for="output-name">Output filename</label>
+        <div class="create-row">
+          <div class="filename">
+            <input id="output-name" name="name" required autocomplete="off" spellcheck="false" aria-describedby="destination">
+            <span class="extension" aria-hidden="true">.cbz</span>
+          </div>
+          <button id="create-button" type="submit">Create CBZ</button>
+        </div>
+        <p id="destination" class="muted"></p>
+      </form>
+    </section>
+
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <noscript><p>Enable JavaScript to browse folders and create archives.</p></noscript>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const PAGE_SIZE = 100;
+    const nameOrder = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+    const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+    let folder = null;
+    let busy = false;
+    let sortedFolders = [];
+    let filteredFolders = [];
+    let page = 0;
+
+    const ICONS = {
+      folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+      chevron: '<path d="m9 6 6 6-6 6"/>',
+      archive: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M11 11h2M11 14h2M11 17h2"/>',
+    };
+
+    function icon(name, size = 18) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", size);
+      svg.setAttribute("height", size);
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "2");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      svg.setAttribute("aria-hidden", "true");
+      svg.innerHTML = ICONS[name];
+      return svg;
+    }
+
+    function notice(message, kind = "info") {
+      $("notice").textContent = message;
+      $("notice").dataset.kind = kind;
+      $("notice").hidden = !message;
+    }
+
+    function setBusy(mode) {
+      busy = mode;
+      document.querySelectorAll(".navigate").forEach((button) => { button.disabled = Boolean(busy); });
+      $("refresh-button").disabled = Boolean(busy);
+      $("output-name").disabled = Boolean(busy);
+      $("folder-filter").disabled = Boolean(busy) || !folder;
+      $("folder-sort").disabled = Boolean(busy) || !folder;
+      updatePageButtons();
+      $("create-button").disabled = Boolean(busy) || !folder?.path;
+      $("create-button").textContent = mode === "create" ? "Creating…" : "Create CBZ";
+      $("browser-panel").setAttribute("aria-busy", String(Boolean(busy)));
+    }
+
+    async function request(url, options) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "The request failed.");
+      return data;
+    }
+
+    function navigationButton(label, path) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "navigate";
+      button.textContent = label;
+      button.disabled = Boolean(busy);
+      button.addEventListener("click", () => browse(path));
+      return button;
+    }
+
+    function updateDestination() {
+      if (!folder?.path) return;
+      const parent = folder.path.split("/").slice(0, -1).join("/");
+      const name = $("output-name").value.trim().replace(/\.cbz$/i, "");
+      $("destination").textContent = `Save to: Library/${parent ? parent + "/" : ""}${name || "…"}.cbz`;
+    }
+
+    function updatePageButtons() {
+      $("previous-page").disabled = Boolean(busy) || page === 0;
+      $("next-page").disabled = Boolean(busy) || (page + 1) * PAGE_SIZE >= filteredFolders.length;
+    }
+
+    function renderFolderList() {
+      const start = page * PAGE_SIZE;
+      const visible = filteredFolders.slice(start, start + PAGE_SIZE);
+      const fragment = document.createDocumentFragment();
+      visible.forEach((item) => {
+        const row = document.createElement("li");
+        const button = navigationButton("", item.path);
+        button.classList.add("folder-button");
+        const folderIcon = document.createElement("span");
+        folderIcon.className = "folder-icon";
+        folderIcon.append(icon("folder", 20));
+        const name = document.createElement("span");
+        name.className = "folder-name";
+        name.textContent = item.name;
+        const metadata = document.createElement("span");
+        metadata.className = "folder-meta";
+        const date = document.createElement("span");
+        date.className = "folder-date";
+        date.textContent = item.created === null ? "Date unavailable" : dateFormat.format(new Date(item.created * 1000));
+        if (item.created !== null) date.title = new Date(item.created * 1000).toLocaleString();
+        metadata.append(date);
+        const arrow = icon("chevron");
+        arrow.classList.add("folder-arrow");
+        metadata.append(arrow);
+        button.append(folderIcon, name, metadata);
+        row.append(button);
+        fragment.append(row);
+      });
+      $("folders").replaceChildren(fragment);
+      $("empty-folders").hidden = filteredFolders.length > 0;
+      $("empty-folders").textContent = folder.folders.length ? "No folders match your filter." : "No subfolders here.";
+      const count = filteredFolders.length.toLocaleString();
+      $("folder-range").textContent = visible.length
+        ? `${(start + 1).toLocaleString()}–${(start + visible.length).toLocaleString()} of ${count} folders`
+        : `0 of ${count} folders`;
+      $("folder-pagination").hidden = filteredFolders.length <= PAGE_SIZE;
+      updatePageButtons();
+    }
+
+    function filterFolders() {
+      const query = $("folder-filter").value.trim().toLowerCase();
+      filteredFolders = sortedFolders.filter((item) => item.name.toLowerCase().includes(query));
+      page = 0;
+      renderFolderList();
+    }
+
+    function sortFolders() {
+      const mode = $("folder-sort").value;
+      sortedFolders = folder.folders.slice().sort((left, right) => {
+        const byName = nameOrder.compare(left.name, right.name);
+        if (mode === "name-asc") return byName;
+        if (mode === "name-desc") return -byName;
+        if (left.created === null) return right.created === null ? byName : 1;
+        if (right.created === null) return -1;
+        const difference = left.created - right.created;
+        return (mode === "created-desc" ? -difference : difference) || byName;
+      });
+      $("date-note").hidden = !mode.startsWith("created") || !folder.folders.some((item) => item.created === null);
+      filterFolders();
+    }
+
+    function render() {
+      const breadcrumbs = $("breadcrumbs");
+      breadcrumbs.replaceChildren();
+      if (folder.path) breadcrumbs.append(navigationButton("Library", ""));
+
+      let path = "";
+      const parts = folder.path ? folder.path.split("/") : [];
+      parts.forEach((part, index) => {
+        path += (path ? "/" : "") + part;
+        const separator = icon("chevron", 14);
+        separator.classList.add("separator");
+        const button = navigationButton(part, path);
+        if (index === parts.length - 1) button.setAttribute("aria-current", "page");
+        breadcrumbs.append(separator, button);
+      });
+
+      $("folder-title").textContent = folder.path ? folder.name : "Library";
+      $("folder-info").textContent = `${folder.folders.length} subfolder${folder.folders.length === 1 ? "" : "s"} · ${folder.image_count} image${folder.image_count === 1 ? "" : "s"} here`;
+      sortFolders();
+      $("archives-section").hidden = folder.archives.length === 0;
+      $("archives").replaceChildren();
+      folder.archives.forEach((name) => {
+        const item = document.createElement("li");
+        const label = document.createElement("span");
+        label.textContent = name;
+        item.append(icon("archive"), label);
+        $("archives").append(item);
+      });
+      $("create-panel").hidden = !folder.path;
+      $("output-name").value = folder.name;
+      updateDestination();
+    }
+
+    async function browse(path) {
+      setBusy("browse");
+      notice("Loading folders…");
+      try {
+        const next = await request(`./api/browse?path=${encodeURIComponent(path)}`);
+        if (next.path !== folder?.path) $("folder-filter").value = "";
+        folder = next;
+        render();
+        notice(folder.path ? "" : "Open a series, then choose the image folder you want to archive.");
+      } catch (error) {
+        notice(`Could not open the folder: ${error.message}`, "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    $("create-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (busy || !folder?.path) return;
+      const name = $("output-name").value;
+      setBusy("create");
+      notice("Creating the archive… Keep this page open until it finishes.");
+      try {
+        const result = await request("./api/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: folder.path, name }),
+        });
+        const size = result.bytes >= 1048576
+          ? `${(result.bytes / 1048576).toFixed(1)} MB`
+          : `${(result.bytes / 1024).toFixed(1)} KB`;
+        notice(`Created Library/${result.path} · ${result.images} image${result.images === 1 ? "" : "s"} · ${size}. Originals unchanged.`, "success");
+      } catch (error) {
+        notice(`Could not create the archive: ${error.message}`, "error");
+      } finally {
+        setBusy(false);
+      }
+    });
+
+    $("folder-filter").addEventListener("input", filterFolders);
+    $("folder-sort").addEventListener("change", () => {
+      sortFolders();
+      try {
+        localStorage.setItem("cbzer.sort", $("folder-sort").value);
+      } catch {
+        notice("Your browser blocked saving the sort preference. Sorting still works, but will reset on reload.", "error");
+      }
+    });
+    $("previous-page").addEventListener("click", () => { page -= 1; renderFolderList(); });
+    $("next-page").addEventListener("click", () => { page += 1; renderFolderList(); });
+    $("output-name").addEventListener("input", updateDestination);
+    $("refresh-button").addEventListener("click", () => browse(folder?.path || ""));
+    try {
+      const savedSort = localStorage.getItem("cbzer.sort");
+      if ([...$("folder-sort").options].some((option) => option.value === savedSort)) {
+        $("folder-sort").value = savedSort;
+      }
+    } catch {
+      // Keep browsing usable when the browser disables local storage.
+    }
+    browse("");
+  </script>
+</body>
+</html>

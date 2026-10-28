@@ -1,0 +1,10 @@
+# Only the image recipe and runtime files belong in the build context.
+**
+!Dockerfile
+!.dockerignore
+!src/
+src/**
+!src/server.py
+!src/creation_time.py
+!src/index.html
+!LICENSE
