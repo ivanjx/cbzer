@@ -120,6 +120,9 @@ def create_archive(root: Path, relative: str, name: str | None = None) -> dict:
     if folder == root:
         raise RequestError(400, "Choose a folder below the library root.")
 
+    if folder.parent == root:
+        raise RequestError(400, "Open a series and choose a folder inside it. Archives are never created in the library root.")
+
     output = folder.parent / archive_name(name, folder.name)
     images = image_files(folder)
     first = next(images, None)

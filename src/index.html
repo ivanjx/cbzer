@@ -292,7 +292,7 @@
       $("folder-filter").disabled = Boolean(busy) || !folder;
       $("folder-sort").disabled = Boolean(busy) || !folder;
       updatePageButtons();
-      $("create-button").disabled = Boolean(busy) || !folder?.path;
+      $("create-button").disabled = Boolean(busy) || !canCreate();
       $("create-button").textContent = mode === "create" ? "Creating…" : "Create CBZ";
       $("browser-panel").setAttribute("aria-busy", String(Boolean(busy)));
     }
@@ -314,8 +314,12 @@
       return button;
     }
 
+    function canCreate() {
+      return Boolean(folder?.path.includes("/"));
+    }
+
     function updateDestination() {
-      if (!folder?.path) return;
+      if (!canCreate()) return;
       const parent = folder.path.split("/").slice(0, -1).join("/");
       const name = $("output-name").value.trim().replace(/\.cbz$/i, "");
       $("destination").textContent = `Save to: Library/${parent ? parent + "/" : ""}${name || "…"}.cbz`;
@@ -415,7 +419,7 @@
         item.append(icon("archive"), label);
         $("archives").append(item);
       });
-      $("create-panel").hidden = !folder.path;
+      $("create-panel").hidden = !canCreate();
       $("output-name").value = folder.name;
       updateDestination();
     }
@@ -438,7 +442,7 @@
 
     $("create-form").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (busy || !folder?.path) return;
+      if (busy || !canCreate()) return;
       const name = $("output-name").value;
       setBusy("create");
       notice("Creating the archive… Keep this page open until it finishes.");

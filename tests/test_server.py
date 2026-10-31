@@ -83,13 +83,18 @@ class ArchiveTests(LibraryFixture):
         self.assertFalse((self.root / "empty.cbz").exists())
 
     def test_images_only_in_nested_folders(self):
-        result = create_archive(self.root, "Series")
-        self.assertEqual("Series.cbz", result["path"])
+        nested = self.root / "Series" / "Volume" / "Chapter"
+        nested.mkdir(parents=True)
+        (nested / "page1.png").write_bytes(b"volume page")
+
+        result = create_archive(self.root, "Series/Volume")
+        self.assertEqual("Series/Volume.cbz", result["path"])
         with ZipFile(self.root / result["path"]) as archive:
-            self.assertEqual(
-                ["Chapter 2/page2.jpg", "Chapter 2/page10.JPG", "Chapter 2/extras/page1.png"],
-                archive.namelist(),
-            )
+            self.assertEqual(["Chapter/page1.png"], archive.namelist())
+
+    def test_top_level_folder_cannot_be_archived_into_library_root(self):
+        self.assert_request_error(400, "Series")
+        self.assertEqual([], list(self.root.glob("*.cbz")))
 
     def test_library_root_cannot_be_archived(self):
         self.assert_request_error(400, "")
